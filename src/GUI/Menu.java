@@ -41,6 +41,9 @@ public class Menu {
 	private JButton encodeButton;
 	private JButton decodeButton;
 	private JTextArea messageTextArea;
+	
+	// Global variables
+	private File selectedFile;
 
 	/**
 	 * Launch the application.
@@ -121,8 +124,8 @@ public class Menu {
 	    		int returnVal = fc.showOpenDialog(frame);
 	    		
 	    		if(returnVal == JFileChooser.APPROVE_OPTION) {
-	    			File file = fc.getSelectedFile();
-	    			messageTextArea.setText("File chosen: " + file.getName());
+	    			selectedFile = fc.getSelectedFile();
+	    			messageTextArea.setText("File chosen: " + selectedFile.getName());
 	    			encodeButton.setVisible(true);
 	    			decodeButton.setVisible(true);
 	    		} else {
