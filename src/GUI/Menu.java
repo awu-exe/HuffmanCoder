@@ -109,7 +109,7 @@ public class Menu {
 	    decodeButton.addActionListener(new ActionListener() {
 	    	public void actionPerformed(ActionEvent e) {
 	    		
-	    	}
+	    	} 
 	    });
 	    
 	    selectFileButton = new JButton("Select a file...");
