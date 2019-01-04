@@ -2,11 +2,15 @@ package Coders;
 
 // Imports
 import java.util.ArrayList;
+import java.io.IOException;
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.PrintWriter;
 
 class Encoder {
 	// MARK: Properties
 	
-	/*
+	/**
 	 * Stores the frequency of chars in a file
 	 * Looks like: "character number" for each node
 	 */
@@ -25,7 +29,7 @@ class Encoder {
 
 	// MARK: Private Methods
 
-	/*
+	/**
 	 * findCharFrequency 
 	 * Finds the frequency of characters given a string
 	 * @Param: str as a String 
@@ -68,11 +72,11 @@ class Encoder {
 		} // End of while loop
 	}// End of findCharFrequency function
 	
-	/*
+	/**
 	 * createCharTree
 	 * Creates a binary tree-like structure based on char frequencies, represented with brackets/commas
 	 * @Param: nothing
-	 * returns a binary tree represented as a String
+	 * Returns a binary tree represented as a String
 	 */
 	private String createCharTree() {
 		// Return immediately if only one char and assign it with key 0
@@ -101,6 +105,8 @@ class Encoder {
 		 */
 		while(totalChars != frequencyList.get(0)) {
 			// Sort in ascending order using insertion sort
+			// We combine the lowest frequency chars together first
+			// and turn them into one node
 			for(int i = 1;i < frequencyList.size();i++) {
 				int freqKey = frequencyList.get(i);
 				String charKey = charList.get(i);
@@ -121,9 +127,138 @@ class Encoder {
 			charList.set(1, "(" + charList.get(0) + "," + charList.get(1) + ")");
 			// Stores a combined of version of frequencyList(0) and frequencyList(1)
 			frequencyList.set(1, frequencyList.get(0) + frequencyList.get(1));
+			// Remove old values
+			charList.remove(0);
+			frequencyList.remove(0);
 		}// End of while loop
 		
 		// Return String version of the tree without extra brackets
 		return charList.get(0);
 	}// End of createCharTree function
-}
+	
+	/**
+	 * treeToKey
+	 * A recursive method that takes a built tree String and creates a String that contains the
+	 * keys of the each char.
+	 * @param tree as a String. Also takes in the # of 0/1 before the node (basically
+	 * Helps determine the level of the tree), need this for recursion.
+	 * Returns String
+	 */
+	public String treeToKey(String tree, String priorLevels) {
+		// Base case, return when only tree is one character
+		if (tree.length() == 1) {
+			charKeyList.add(tree + priorLevels);// add to the ArrayList
+			return tree + priorLevels + " ";
+		}
+
+		int count = 0;// Counts # "("
+		int index = 0; // Index counter
+
+		// Finds the "," that divides the left and right branches
+		// Starts at 1 because the first index is an extra "("
+		for (int i = 1; i < tree.length(); i++) {
+			// Prevents giving the wrong index for ","
+			if (tree.charAt(i) == '(') {
+				count++;
+			}
+			// Makes sure the ending indicator is the correct one or else tree doesn't get unloaded correctly
+			else if (tree.charAt(i) == ')' && count != 0) {
+				count--;
+			}
+			// Remember the index of the "," as it separates the right branch from the left
+			// one
+			if (tree.charAt(i) == ',' && count == 0) {
+				index = i;
+			}
+		}
+		// recall method, left branch + right branch, without the extra brackets at the
+		// end
+		return treeToKey(tree.substring(1, index), priorLevels + "0")
+				+ treeToKey(tree.substring(index + 1, tree.length() - 1), priorLevels + "1");
+	} // End of treeToKey function
+	
+	 /**
+	   * readFile
+	   * Method that reads the contents from a specified file
+	   * @params the name of the file as a String
+	   * Returns the contents of the file in a String
+	   */ 
+	public String readFile(String file) throws IOException {
+		// BufferedReader setup
+		BufferedReader br = null;
+		String contents = "";// return value
+		try {
+			// initialize buffered reader
+			br = new BufferedReader(new FileReader(file));
+			String line;
+			// read to the end of file
+			while ((line = br.readLine()) != null) {
+				// add on to result String
+				contents += line;
+			}
+		} finally {
+			br.close();
+		}
+		return contents;
+	} // End of readFile function
+	
+	/**
+	 * writeFile
+	 * Method encodes a message and prints the encoded message into a new file
+	 * @param the message to encode and the name of the file from which 
+	 * the message was extracted from
+	 * Returns nothing
+	 */
+	public void writeFile(String messageToEncode, String fileName) throws IOException{
+		// Helper variables:
+		
+		// Counts the number of zeroes before a key
+		int preZeroes = 0;
+		// Stores the decimal version of the key
+		int decimalOfKey = 0;
+		// Temporary storage for 
+		String temp = "";
+		// Stores the encoded message
+		String encodedMessage = "";
+		
+		// Printwriter setup
+		PrintWriter pw = null;
+		try {
+			// Create a new file
+			pw = new PrintWriter(fileName + "Encoded.txt");
+			
+			// Encode the message, buildTree and treeToKey functions
+			// should have been called at this point
+			for(int i = 0;i < messageToEncode.length();i++) {
+				for(int j = 0;j < charKeyList.size();j++) {
+					// get the key associated to the char and add to encoded message
+					if(messageToEncode.charAt(i) == charKeyList.get(j).charAt(0)) {
+						encodedMessage += charKeyList.get(j).substring(1);
+					}
+				} // End of inner for loop
+			} // End of outer for loop
+			
+			// Make message a multiple of 8 bits
+			preZeroes = (int)(8 * Math.ceil(encodedMessage.length()/8.0) - encodedMessage.length());
+			if(encodedMessage.length() % 8 != 0) {
+				//add the extra to message to make data 8 bits
+				for(int i = 0;i < preZeroes;i++) {
+					encodedMessage += "0";
+				}
+			}
+			
+			// Write the amount of extra bits into the file (first line)
+			pw.println(preZeroes);
+			
+			// Temporary storage for keys
+			String keyTemp = "";
+			
+			// Sort keys from largest length to smallest length
+			for(int i = 1;i < charKeyList.size();i++) {
+				
+			}
+		} finally{
+			pw.close();
+		}
+	} // End of writeFile function
+} // End of Encoded class
