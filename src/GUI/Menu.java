@@ -26,6 +26,9 @@ import javax.swing.JFileChooser;
 import javax.swing.JButton;
 import javax.swing.JTextArea;
 
+// Import packages
+import Coders.*;
+
 
 // Import io components
 import java.io.File;
@@ -102,7 +105,9 @@ public class Menu {
 	    encodeButton.setVisible(false);
 	    encodeButton.addActionListener(new ActionListener() {
 	    	public void actionPerformed(ActionEvent e) {
-	    		
+	    		// Initialize new Encoder
+	    		Encoder encoder = new Encoder();
+	    		encoder.Encode(selectedFile.getName());
 	    	}
 	    });
 	    

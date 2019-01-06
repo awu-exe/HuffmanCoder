@@ -7,7 +7,7 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.PrintWriter;
 
-class Encoder {
+public class Encoder {
 	// MARK: Properties
 	
 	/**
@@ -119,7 +119,7 @@ class Encoder {
 					j--;
 				}// End of while loop
 				frequencyList.set(j+1, freqKey);
-				charList.set(j, charKey);
+				charList.set(j+1, charKey);
 			}// End of for loop
 			
 			
@@ -144,7 +144,7 @@ class Encoder {
 	 * Helps determine the level of the tree), need this for recursion.
 	 * Returns String
 	 */
-	public String treeToKey(String tree, String priorLevels) {
+	private String treeToKey(String tree, String priorLevels) {
 		// Base case, return when only tree is one character
 		if (tree.length() == 1) {
 			charKeyList.add(tree + priorLevels);// add to the ArrayList
@@ -216,8 +216,8 @@ class Encoder {
 		int preZeroes = 0;
 		// Stores the decimal version of the key
 		int decimalOfKey = 0;
-		// Temporary storage for 
-		String temp = "";
+		// Temporary storage for  decimal
+		String dTemp = "";
 		// Stores the encoded message
 		String encodedMessage = "";
 		
@@ -256,9 +256,76 @@ class Encoder {
 			// Sort keys from largest length to smallest length
 			for(int i = 1;i < charKeyList.size();i++) {
 				
+				int k = charKeyList.get(i).substring(1).length();
+				String kValue = charKeyList.get(i);
+				int j = i - 1;
+				
+				while(j >= 0 && charKeyList.get(j).substring(1).length() < k) {
+					charKeyList.set(j+1, charKeyList.get(j));
+					j--;
+				}
+				
+				charKeyList.set(j+1,kValue);
+			} // End of sort
+			
+			// Print keys into file
+			for(int i = 0;i < charKeyList.size();i++) {
+				// Convert the key String into an integer
+				decimalOfKey = Integer.parseInt(charKeyList.get(i).substring(1), 2);
+				dTemp = Integer.toBinaryString(decimalOfKey);
+				
+				// Find the preceding zeroes of a key
+				preZeroes = charKeyList.get(i).substring(1).length() - dTemp.length();
+				
+				// Write to file
+				pw.print(charKeyList.get(i).charAt(0) + " " + (char)decimalOfKey + " " + preZeroes);
+				// Exclude the last new line
+				if(i == charKeyList.size() - 1) {
+					// *** Separates "key" info from encoded message
+					pw.println("***");
+				}
 			}
+			
+			for(int i = 0;i < encodedMessage.length()/8;i++) {
+				// Print as ascii characters
+				pw.print((char)Integer.parseInt(encodedMessage.substring(0,8), 2));
+				encodedMessage = encodedMessage.substring(1);
+			}
+			
 		} finally{
 			pw.close();
 		}
 	} // End of writeFile function
+	
+	/**
+	 * Encode
+	 */
+	public void Encode(String fileName) {
+		String fileData;
+		
+		try {
+			fileData = readFile(fileName);
+			
+			findCharFrequency(fileData);
+			
+			String tree = createCharTree();
+			String decodedTree;
+			
+			// Decode Tree
+			if(tree.length() != 2) {
+				decodedTree = treeToKey(tree, "");
+			} 
+			// If tree only has one node
+			else { 
+				charKeyList.add(tree.substring(1) + tree.substring(0,1));
+			}
+			
+			writeFile(fileData, fileName);
+		} catch (IOException e) {
+			System.out.println(e);
+		}
+		
+		
+	}
+	
 } // End of Encoded class
